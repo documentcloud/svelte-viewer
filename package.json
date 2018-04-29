@@ -15,5 +15,8 @@
     "build": "rollup -c",
     "dev": "serve public & rollup -c -w",
     "start": "serve public"
+  },
+  "dependencies": {
+    "@sveltejs/svelte-virtual-list": "^2.0.0"
   }
 }
