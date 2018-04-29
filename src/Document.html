@@ -1,0 +1,41 @@
+{#if config != null}
+  <h1>{config.title}</h1>
+  <h2><a href="{config.contributor_documents_url}">{config.contributor}</a> - <a href="{config.contributor_organization_documents_url}">{config.contributor_organization}</a></h2>
+  <div class="page-list">
+    {#each pageUrls as pageUrl}
+      <VisualPage src="{pageUrl}" />
+    {/each}
+  </div>
+{/if}
+
+<script>
+  import VisualPage from './VisualPage.html';
+
+  export default {
+    oncreate() {
+      const {url} = this.get();
+      fetch(url).then((response) => response.json().then((json) => {
+        this.set({config: json});
+      }));
+    },
+    computed: {
+      pageUrls: ({config}) => {
+        if (config == null) return null;
+        const pageCount = config.pages;
+        const imageTemplate = config.resources.page.image;
+        const pageUrls = [];
+        for (let i = 1; i <= pageCount; i++) {
+          pageUrls.push(imageTemplate.replace('{page}', i).replace('{size}', 'normal'));
+        }
+        return pageUrls;
+      },
+    },
+    components: {VisualPage},
+  };
+</script>
+
+<style>
+  .page-list {
+    background: gainsboro;
+  }
+</style>
