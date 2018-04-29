@@ -149,19 +149,22 @@
 
         let vOff = 0;
         let deltasBeforeStart = 0;
-        for (let v = paddedStart; v < paddedEnd; v++) {
-          const rowIndex = v - paddedStart;
-          const visible = v >= start && v < end;
-
-          if (this.heightMap[v] != this.rows[rowIndex].offsetHeight) {
-            // console.log('changing', this.heightMap[v], this.rows[rowIndex].offsetHeight);
-            // console.log('start', start, 'changed', v);
-            if (v < start) {
-              deltasBeforeStart += this.heightMap[v] - this.rows[rowIndex].offsetHeight;
-            }
-          }
-          this.heightMap[v] = this.rows[rowIndex].offsetHeight;
+        for (let v = 0; v < this.rows.length; v++) {
+          this.heightMap[v] = this.rows[v].offsetHeight;
         }
+        // for (let v = paddedStart; v < paddedEnd; v++) {
+        //   const rowIndex = v - paddedStart;
+        //   const visible = v >= start && v < end;
+
+        //   if (this.heightMap[v] != this.rows[rowIndex].offsetHeight) {
+        //     // console.log('changing', this.heightMap[v], this.rows[rowIndex].offsetHeight);
+        //     // console.log('start', start, 'changed', v);
+        //     if (v < start) {
+        //       deltasBeforeStart += this.heightMap[v] - this.rows[rowIndex].offsetHeight;
+        //     }
+        //   }
+        //   this.heightMap[v] = this.rows[rowIndex].offsetHeight;
+        // }
 
         // if (event) console.log('event', event);
         // scrollTop += deltasBeforeStart;
