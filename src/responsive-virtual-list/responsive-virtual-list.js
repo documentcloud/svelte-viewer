@@ -1,5 +1,5 @@
 export class Viewport {
-  constructor(height, pages, scrollTop = 0) {
+  constructor(height, pages, initialPage = 0, scrollTop = 0) {
     this.height = height;
     this.scrollTop = scrollTop;
     this.pageSet = new PageSet(this, pages);
@@ -17,7 +17,6 @@ export class PageSet {
   }
 
   estimatedPageHeight() {
-    debugger;
     let total = 0;
     let count = 0;
     for (let i = 0; i < this.pages.length; i++) {
@@ -51,9 +50,10 @@ export class PageSet {
 
   init() {
     let offset = 0;
+    let i;
 
     // Initialize initial heightmap until viewport is full.
-    for (let i = 0; i < this.pages.length && offset <= this.viewport.height; i++) {
+    for (i = 0; i < this.pages.length && offset <= this.viewport.height; i++) {
       const page = this.pages[i];
 
       // Set page properties to keep track of index and percolate events.
@@ -65,10 +65,21 @@ export class PageSet {
       this.observed.add(i); // add page to observed
     }
 
+    // Finish initializing pages
+    for (; i < this.pages.length; i++) {
+      const page = this.pages[i];
+      page.index = i;
+      page.pageSet = this;
+    }
+
     this.updateHeights();
   }
 
-  pageUpdated(page) {}
+  pageUpdated(page) {
+    this.heightMap[page.index] = page.height;
+    this.observed.add(page.index);
+    this.updateHeights();
+  }
 }
 
 export class Page {
@@ -78,8 +89,12 @@ export class Page {
     this.pageSet = null;
   }
 
+  load() {
+    this.pageSet.pageUpdated(this);
+  }
+
   updateHeight(height) {
     this.height = height;
-    this.pageSet.updatePageHeight(page);
+    this.pageSet.pageUpdated(this);
   }
 }

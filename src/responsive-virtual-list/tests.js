@@ -6,7 +6,7 @@ test('basic init', t => {
     new Page(200),
     new Page(200),
     new Page(200),
-    new Page(500),
+    new Page(1000),
   ];
   const viewport = new Viewport(500, pages);
   const pageSet = viewport.pageSet;
@@ -20,4 +20,32 @@ test('basic init', t => {
   // The heightmap should calculate last page as average of first 3: 200.
   t.is(pageSet.heightMap[3], 200);
   t.is(pageSet.totalHeight, 800);
+});
+
+test('invalidating estimate when observing page height', t => {
+  const pages = [
+    new Page(200),
+    new Page(200),
+    new Page(200),
+    new Page(1000),
+  ];
+  const viewport = new Viewport(500, pages);
+  const pageSet = viewport.pageSet;
+
+  // Observe the last page
+  pages[3].load();
+  t.is(pageSet.estimatedPageHeight(), 400);
+  t.is(pageSet.heightMap[3], 1000);
+  t.is(pageSet.totalHeight, 1600);
+});
+
+test.skip('load from anchor', t => {
+  const pages = [
+    new Page(200),
+    new Page(200),
+    new Page(200),
+    new Page(1000),
+  ];
+  const viewport = new Viewport(500, pages, 3);
+  const pageSet = viewport.pageSet;
 });
