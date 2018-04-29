@@ -2,13 +2,36 @@ export class Viewport {
   constructor(height, pages, initialPage = 0, scrollTop = 0) {
     this.height = height;
     this.scrollTop = scrollTop;
+    /** @type {!PageSet} */
     this.pageSet = new PageSet(this, pages);
+  }
+
+  jump(pageNum) {
+    return this.jumpIndex(pageNum - 1);
+  }
+
+  jumpIndex(pageIndex) {
+    this.scrollTo(this.pageSet.positionOf(pageIndex));
+  }
+
+  scrollTo(position) {
+    this.scrollTop = position;
+  }
+
+  load() {
+
   }
 }
 
 export class PageSet {
+  /**
+   * @param {!Viewport} viewport 
+   * @param {!Array<Page>} pages 
+   */
   constructor(viewport, pages) {
+    /** @type {!Array<Page>} */
     this.pages = pages;
+    /** @type {!Viewport} */
     this.viewport = viewport;
     this.heightMap = [];
     this.totalHeight = 0;
@@ -31,6 +54,14 @@ export class PageSet {
     } else {
       return total / count;
     }
+  }
+
+  positionOf(index) {
+    let accumulatedHeight = 0;
+    for (let i = 0; i < index; i++) {
+      accumulatedHeight += this.heightMap[i];
+    }
+    return accumulatedHeight;
   }
 
   updateHeights() {
@@ -86,6 +117,7 @@ export class Page {
   constructor(height) {
     this.height = height;
     this.index = null;
+    /** @type {?PageSet} */
     this.pageSet = null;
   }
 

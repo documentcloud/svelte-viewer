@@ -49,3 +49,30 @@ test.skip('load from anchor', t => {
   const viewport = new Viewport(500, pages, 3);
   const pageSet = viewport.pageSet;
 });
+
+test('page position', t => {
+  const pages = [
+    new Page(200),
+    new Page(200),
+    new Page(200),
+    new Page(1000),
+  ];
+  const viewport = new Viewport(500, pages, 3);
+  const pageSet = viewport.pageSet;
+
+  [0, 200, 400, 600].forEach((x, i) => t.is(pageSet.positionOf(i), x));
+});
+
+test('jump page position', t => {
+  const pages = [
+    new Page(200),
+    new Page(200),
+    new Page(200),
+    new Page(1000),
+  ];
+  const viewport = new Viewport(500, pages);
+  const pageSet = viewport.pageSet;
+
+  viewport.jumpIndex(3);
+  t.is(viewport.scrollTop, pageSet.positionOf(3));
+});
