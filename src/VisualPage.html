@@ -1,9 +1,17 @@
 <Page>
-  <div ref:page style="height: 800px; width: 700px;">
+  {#each pageNotes as pageNote}
+  <div class="page-note">
+    <h3>{pageNote.title}</h3>
+    {#if pageNote.content != null}
+    <div>{@html pageNote.content}</div>
+    {/if}
+  </div>
+  {/each}
+  <div ref:page>
     {#if showImage}
       <img ref:img alt :src on:load="stupid()">
     {:else}
-      {num}
+      <div style="position: absolute;">{num}</div>
     {/if}
   </div>
 </Page>
@@ -20,17 +28,24 @@
           const poll = setInterval(() => {
             if (img.naturalWidth) {
               clearInterval(poll);
-              page.style = `width: ${img.naturalWidth}px; height: ${img.naturalHeight};`;
+              page.style = `height: ${img.naturalHeight / img.naturalWidth * 100}%; padding-bottom: inherit;`;
             }
           }, 10);
         }
-      }, 250);
+      }, 25);
     },
     data() {
       return {
         showImage: false,
         imageLoaded: false,
       };
+    },
+    computed: {
+      pageNotes: ({notes}) => {
+        return notes.filter((note) => {
+          return note.location == null;
+        });
+      },
     },
     methods: {
       stupid() {
@@ -49,9 +64,22 @@
 <style>
   ref:page {
     background: white;
+    padding-bottom: 113%;
+    width: 100%;
+    position: relative;
   }
 
-  img {
+  ref:img {
     display: block;
+    width: 100%;
+  }
+
+  .page-note {
+    text-align: left;
+    background: white;
+    border: solid 2px #ffe325;
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+    margin: 0 0 1em 0;
+    padding: 1em;
   }
 </style>

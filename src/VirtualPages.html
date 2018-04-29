@@ -17,6 +17,12 @@
   .row {
     overflow: hidden;
   }
+
+  ref:container {
+    max-width: 744px;
+    width: 100%;
+    margin: 0 auto;
+  }
 </style>
 
 <script>
@@ -80,6 +86,15 @@
     },
 
     methods: {
+      jumpToPage(page) {
+        page--;
+
+        let offset = 0;
+        for (let i = 0; i < page; i++) {
+          offset += this.heightMap[i];
+        }
+        this.refs.viewport.scrollTop = offset;
+      },
       loadViewport() {
         const {items} = this.get();
         const {viewport} = this.refs;

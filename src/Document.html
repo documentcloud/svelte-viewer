@@ -1,9 +1,15 @@
 {#if config != null}
   <h1>{config.title}</h1>
+  <div><a target="blank_" href="{config.canonical_url}">url</a> - <a target="blank_" href="{config.canonical_url.replace('.html','.json')}">json</a></div>
   <h2><a href="{config.contributor_documents_url}">{config.contributor}</a> - <a href="{config.contributor_organization_documents_url}">{config.contributor_organization}</a></h2>
   <div>page {currentPage + 1} of {config.pages}</div>
-  <div class="page-list">
-    <VirtualPages items={pageUrls} component={VisualPage} bind:currentPage=currentPage />
+  <div>
+    Jump to page <input bind:value="jumpPage" on:enterpress="refs.vp.jumpToPage(jumpPage)"> <button on:click="refs.vp.jumpToPage(jumpPage)">Go</button>
+  </div>
+  <div class="page-container">
+    <div class="page-list">
+      <VirtualPages ref:vp items={pageUrls} component={VisualPage} bind:currentPage=currentPage />
+    </div>
   </div>
 {/if}
 
@@ -22,24 +28,55 @@
       return {
         config: null,
         VisualPage,
+        jumpPage: 0,
       };
     },
     computed: {
-      pageUrls: ({config}) => {
+      pageUrls: ({config, notesByPage}) => {
         if (config == null) return null;
         const pageCount = config.pages;
         const imageTemplate = config.resources.page.image;
         const pageUrls = [];
         for (let i = 1; i <= pageCount; i++) {
+          let notes = [];
+          if (notesByPage.hasOwnProperty(i)) notes = notesByPage[i];
           pageUrls.push({
             src: imageTemplate.replace('{page}', i).replace('{size}', 'normal'),
             num: i,
+            notes,
           });
         }
         return pageUrls;
       },
+      notesByPage: ({config}) => {
+        if (config == null || config.annotations == null) return null;
+        const notesByPage = {};
+        for (const annotation of config.annotations) {
+          if (notesByPage.hasOwnProperty(annotation.page)) {
+            notesByPage[annotation.page].push(annotation);
+          } else {
+            notesByPage[annotation.page] = [annotation];
+          }
+        }
+        return notesByPage;
+      },
     },
     components: {VirtualPages},
+    events: {
+      enterpress(node, callback) {
+        function onkeydown(event) {
+          if (event.keyCode == 13) callback(event);
+        }
+
+        node.addEventListener('keydown', onkeydown, false);
+
+        return {
+          teardown() {
+            node.removeEventListener('keydown', onkeydown, false);
+          }
+        };
+      },
+    },
   };
 </script>
 
