@@ -7,7 +7,7 @@
     {/if}
   </div>
   {/each}
-  <div ref:page>
+  <div ref:page style="padding-bottom: 113%;">
     {#if showImage}
       <img ref:img alt :src on:load="stupid()">
     {:else}
@@ -28,7 +28,7 @@
           const poll = setInterval(() => {
             if (img.naturalWidth) {
               clearInterval(poll);
-              page.style = `height: ${img.naturalHeight / img.naturalWidth * 100}%; padding-bottom: inherit;`;
+              page.style = '';
             }
           }, 10);
         }
@@ -64,7 +64,6 @@
 <style>
   ref:page {
     background: white;
-    padding-bottom: 113%;
     width: 100%;
     position: relative;
   }
