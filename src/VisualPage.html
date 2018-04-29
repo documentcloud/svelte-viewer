@@ -1,16 +1,33 @@
 <Page>
-  <img style="{loaded ? '' : 'height: 700px'}" alt :src on:load="set({loaded: true})">
+  <div ref:page>
+    {#if showImage}
+      <img style="{loaded ? '' : 'height: 700px'}" alt :src>  
+    {/if}
+  </div>
 </Page>
 
 <script>
   import Page from './Page.html';
 
   export default {
+    oncreate() {
+      setTimeout(() => {
+        if (document.body.contains(this.refs.page)) this.set({showImage: true});
+      }, 25);
+    },
     data() {
       return {
-        loaded: false,
+        showImage: false,
       };
     },
     components: {Page},
   };
 </script>
+
+<style>
+  ref:page {
+    height: 906px;
+    width: 700px;
+    background: white;
+  }
+</style>
