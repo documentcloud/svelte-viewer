@@ -1,11 +1,16 @@
 <Page>
-  <img alt :src>
+  <img style="{loaded ? '' : 'height: 700px'}" alt :src on:load="set({loaded: true})">
 </Page>
 
 <script>
   import Page from './Page.html';
 
   export default {
+    data() {
+      return {
+        loaded: false,
+      };
+    },
     components: {Page},
   };
 </script>
