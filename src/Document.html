@@ -2,13 +2,13 @@
   <h1>{config.title}</h1>
   <h2><a href="{config.contributor_documents_url}">{config.contributor}</a> - <a href="{config.contributor_organization_documents_url}">{config.contributor_organization}</a></h2>
   <div class="page-list">
-    <VirtualList items={pageUrls} component={VisualPage} />
+    <VirtualPages items={pageUrls} component={VisualPage} />
   </div>
 {/if}
 
 <script>
   import VisualPage from './VisualPage.html';
-  import VirtualList from '@sveltejs/svelte-virtual-list/src/VirtualList.html';
+  import VirtualPages from './VirtualPages.html';
 
   export default {
     oncreate() {
@@ -37,7 +37,7 @@
         return pageUrls;
       },
     },
-    components: {VirtualList},
+    components: {VirtualPages},
   };
 </script>
 

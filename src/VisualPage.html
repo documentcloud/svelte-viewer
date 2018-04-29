@@ -1,7 +1,7 @@
 <Page>
-  <div ref:page>
+  <div ref:page style="{showImage ? '' : 'height: 906px; width: 700px;'}">
     {#if showImage}
-      <img style="{loaded ? '' : 'height: 700px'}" alt :src>  
+      <img alt :src on:load="stupid()">  
     {/if}
   </div>
 </Page>
@@ -20,14 +20,12 @@
         showImage: false,
       };
     },
+    methods: {
+      stupid() {
+        console.log('call event');
+        this.fire('pageLoaded');
+      }
+    },
     components: {Page},
   };
 </script>
-
-<style>
-  ref:page {
-    height: 906px;
-    width: 700px;
-    background: white;
-  }
-</style>
