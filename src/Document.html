@@ -1,8 +1,9 @@
 {#if config != null}
   <h1>{config.title}</h1>
   <h2><a href="{config.contributor_documents_url}">{config.contributor}</a> - <a href="{config.contributor_organization_documents_url}">{config.contributor_organization}</a></h2>
+  <div>page {currentPage + 1} of {config.pages}</div>
   <div class="page-list">
-    <VirtualPages items={pageUrls} component={VisualPage} />
+    <VirtualPages items={pageUrls} component={VisualPage} bind:currentPage=currentPage />
   </div>
 {/if}
 
@@ -32,6 +33,7 @@
         for (let i = 1; i <= pageCount; i++) {
           pageUrls.push({
             src: imageTemplate.replace('{page}', i).replace('{size}', 'normal'),
+            num: i,
           });
         }
         return pageUrls;

@@ -1,7 +1,9 @@
 <Page>
-  <div ref:page style="{showImage ? '' : 'height: 906px; width: 700px;'}">
+  <div ref:page style="height: 800px; width: 700px;">
     {#if showImage}
-      <img alt :src on:load="stupid()">  
+      <img ref:img alt :src on:load="stupid()">
+    {:else}
+      {num}
     {/if}
   </div>
 </Page>
@@ -12,20 +14,44 @@
   export default {
     oncreate() {
       setTimeout(() => {
-        if (document.body.contains(this.refs.page)) this.set({showImage: true});
-      }, 25);
+        if (document.body.contains(this.refs.page)) {
+          this.set({showImage: true});
+          const {img, page} = this.refs;
+          const poll = setInterval(() => {
+            if (img.naturalWidth) {
+              clearInterval(poll);
+              page.style = `width: ${img.naturalWidth}px; height: ${img.naturalHeight};`;
+            }
+          }, 10);
+        }
+      }, 250);
     },
     data() {
       return {
         showImage: false,
+        imageLoaded: false,
       };
     },
     methods: {
       stupid() {
-        console.log('call event');
-        this.fire('pageLoaded');
+        this.refs.page.style = '';
+        this.fire('pageLoaded', {
+          adjustedHeight: this.refs.img.offsetHeight,
+          prevHeight: 800,
+          num: this.get().num - 1,
+        });
       }
     },
     components: {Page},
   };
 </script>
+
+<style>
+  ref:page {
+    background: white;
+  }
+
+  img {
+    display: block;
+  }
+</style>
