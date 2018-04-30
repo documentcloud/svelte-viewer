@@ -18,6 +18,14 @@ export class Viewport {
     this.scrollTop = position;
   }
 
+  top() {
+    return this.scrollTop;
+  }
+
+  bottom() {
+    return this.scrollTop + this.height;
+  }
+
   load() {
 
   }
@@ -56,12 +64,42 @@ export class PageSet {
     }
   }
 
+  visible() {
+    const [top, bottom] = [this.viewport.top(), this.viewport.bottom()];
+    console.log([top, bottom]);
+    return this.range(this.pageAtPosition(top), this.pageAtPosition(bottom));
+  }
+
+  range(page1, page2) {
+    const [index1, index2] = [page1.index, page2.index];
+    if (index1 > index2) throw new Error('Reverse list. This should not happen');
+    const pages = [];
+    for (let i = index1; i <= index2; i++) {
+      pages.push(this.pages[i]);
+    }
+    return pages;
+  }
+
   positionOf(index) {
     let accumulatedHeight = 0;
     for (let i = 0; i < index; i++) {
       accumulatedHeight += this.heightMap[i];
     }
     return accumulatedHeight;
+  }
+
+  /**
+   * @param {number} position 
+   * @return {!Page}
+   */
+  pageAtPosition(position) {
+    let offset = 0;
+    for (let i = 0; i < this.pages.length; i++) {
+      let pageBottom = offset + this.heightMap[i];
+      if (position >= offset && position < pageBottom) return this.pages[i];
+      offset = pageBottom;
+    }
+    throw new Error('Position outside of doc');
   }
 
   updateHeights() {
