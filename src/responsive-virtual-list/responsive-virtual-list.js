@@ -1,15 +1,37 @@
 const SCROLL_OUT_OF_BOUNDS = 'The scroll position is out of bounds';
 
+/**
+ * A class to route callbacks back to DOM.
+ */
+export class CallbackCenter {
+  constructor(visibleCallback, scrollCallback, heightCallback) {
+    this.visibleCallback = visibleCallback;
+    this.scrollCallback = scrollCallback;
+    this.heightCallback = heightCallback;
+  }
+}
+
 export class Viewport {
-  constructor(height, pages, initialPage = 0, scrollTop = 0) {
+  constructor(height, pages, initialPage = 0, scrollTop = 0, callbackCenter = null) {
     this.height = height;
     this.scrollTop = scrollTop;
+    /** @type {!CallbackCenter} */
+    this.callbackCenter = callbackCenter;
     /** @type {!PageSet} */
     this.pageSet = new PageSet(this, pages, initialPage);
   }
 
+  init() {
+    this.pageSet.init();
+  }
+
   updateHeight(height) {
     this.height = height;
+    this.updatePageSet();
+  }
+
+  updatePageSet() {
+    if (this.callbackCenter != null) this.callbackCenter.visibleCallback();
     this.pageSet.update();
   }
 
@@ -71,7 +93,12 @@ export class Viewport {
     //   throw new Error(SCROLL_OUT_OF_BOUNDS);
     // }
     this.scrollTop = position;
-    if (update) this.pageSet.update();
+    if (update) {
+      this.updatePageSet();
+    } else if (this.callbackCenter != null) {
+      // If not updating, then the DOM needs to be updated to reflect changes.
+      this.callbackCenter.scrollCallback(position);
+    }
   }
 
   /**
@@ -122,7 +149,7 @@ export class PageSet {
     this.heightMap = [];
     this.totalHeight = 0;
     this.observed = new Set(); // which pages have been observed
-    this.init(initialPage);
+    this.initialPage = initialPage;
   }
 
   estimatedPageHeight() {
@@ -142,9 +169,14 @@ export class PageSet {
     }
   }
 
-  visible() {
+  visibleIndices() {
     const [top, bottom] = [this.viewport.top(), this.viewport.bottom()];
-    return this.range(this.pageAtPosition(top), this.pageAtPosition(bottom, true));
+    return [this.pageAtPosition(top).index, this.pageAtPosition(bottom, true).index];
+  }
+
+  visible() {
+    const [topPage, bottomPage] = this.visibleIndices();
+    return this.range(topPage, bottomPage);
   }
 
   update() {
@@ -152,8 +184,7 @@ export class PageSet {
     visiblePages.forEach((page) => page.updateHeight());
   }
 
-  range(page1, page2) {
-    const [index1, index2] = [page1.index, page2.index];
+  range(index1, index2) {
     if (index1 > index2) throw new Error('Reverse list. This should not happen');
     const pages = [];
     for (let i = index1; i <= index2; i++) {
@@ -214,10 +245,17 @@ export class PageSet {
         total += this.pages[i].height;
       }
     }
-    this.totalHeight = total;
+    this.updateTotalHeight(total);
+    
   }
 
-  init(initialPage = 0) {
+  updateTotalHeight(height) {
+    this.totalHeight = height;
+    if (this.viewport.callbackCenter != null) this.viewport.callbackCenter.heightCallback(height);
+  }
+
+  init(initialPage = null) {
+    if (initialPage == null) initialPage = this.initialPage;
     let offset = 0;
     let i;
 
@@ -249,6 +287,8 @@ export class PageSet {
     }
 
     this.updateEstimatedHeights();
+    // Scroll the viewport appropriately, updating the page.
+    this.viewport.scrollToPosition(this.positionOfPageTop(initialPage));
   }
 
   /**
@@ -276,9 +316,10 @@ export class PageSet {
 }
 
 export class Page {
-  constructor(height) {
+  constructor(height, optData = null) {
     this.height = height;
     this.index = null;
+    this.data = optData;
     /** @type {?PageSet} */
     this.pageSet = null;
   }

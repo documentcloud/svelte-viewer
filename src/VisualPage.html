@@ -1,4 +1,4 @@
-<Page>
+<Page ref:page>
   {#each pageNotes as pageNote}
   <div class="page-note">
     <h3>{pageNote.title}</h3>
@@ -9,6 +9,7 @@
   {/each}
   <div ref:page style="padding-top: 113%;">
     {#if showImage}
+      <div style="position: absolute;">{num} {height}</div>
       <img ref:img alt :src on:load="stupid()">
     {:else}
       <div style="position: absolute;">{num}</div>
@@ -21,6 +22,8 @@
 
   export default {
     oncreate() {
+      const {page} = this.get();
+      page.updateHeight(this.refs.page.offsetHeight);
       setTimeout(() => {
         if (document.body.contains(this.refs.page)) {
           this.set({showImage: true});
@@ -29,6 +32,7 @@
             if (img.naturalWidth) {
               clearInterval(poll);
               page.style = '';
+              page.updateHeight(this.refs.page.offsetHeight);
             }
           }, 10);
         }
@@ -42,6 +46,7 @@
     },
     computed: {
       pageNotes: ({notes}) => {
+        if (notes == null) return [];
         return notes.filter((note) => {
           return note.location == null;
         });
@@ -49,12 +54,9 @@
     },
     methods: {
       stupid() {
+        const {page} = this.get();
         this.refs.page.style = '';
-        this.fire('pageLoaded', {
-          adjustedHeight: this.refs.img.offsetHeight,
-          prevHeight: 800,
-          num: this.get().num - 1,
-        });
+        page.updateHeight(this.refs.page.offsetHeight);
       }
     },
     components: {Page},

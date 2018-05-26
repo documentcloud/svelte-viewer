@@ -1,8 +1,24 @@
-<div ref:viewport on:scroll='handleScroll()' style='height: {height};'>
+<div>Visible pages: {visible.map((x) => x.index)}</div>
+{#if viewport}
+  <div>
+    <div>Debug:</div>
+    <ul>
+      <li>Viewport height: {viewportHeight}</li>
+      <li>Viewport top: {viewportTop}</li>
+      <li>Viewport bottom: {viewportBottom}</li>
+      <li>Top pad: {top}</li>
+      <li>Bottom pad: {bottom}</li>
+      <li>Scroll top: {viewportScrollTop}</li>
+      <li>Heightmap: {pageSetHeightmap}</li>
+      <li>Page set height: {pageSetHeight}</li>
+    </ul>
+  </div>
+{/if}
+<div ref:viewport on:scroll='handleScroll()' style='height: {height}px;' bind:offsetHeight=viewportHeight>
   <div ref:container style='padding-top: {top}px; padding-bottom: {bottom}px;'>
     {#each visible as item (item.index)}
-      <div class='row' style="{item.index >= start && item.index < end ? '' : 'position: fixed; visibility: hidden;'}">
-        <svelte:component this={component} {..._props} {...item.data} on:pageLoaded="handleScroll(event)" />
+      <div class='row'>
+        <svelte:component this={component} {..._props} {...item.data} page={item.page} />
       </div>
     {/each}
   </div>
@@ -26,228 +42,86 @@
 </style>
 
 <script>
-  import {Viewport, PageSet, Page} from 'responsive-virtual-list/responsive-virtual-list';
-
-  let lastScrollTop = 0;
-  let lastPageTop = 0;
-  let lastPageNum = 0;
-  let lastShift = false;
+  import {Viewport, PageSet, Page, CallbackCenter} from './responsive-virtual-list/responsive-virtual-list';
 
   export default {
-    data() {
-      return { top: 0, bottom: 0, start: 0, end: 0, height: '100%', _props: {}, currentPage: 0, currentPageTop: 0, currentScrollTop: 0, currentScrollBottom: 0 };
-    },
-
-    computed: {
-      paddedStart: ({start}) => {
-        if (start > 0) return start - 1;
-        return start;
-      },
-      paddedEnd: ({end, items}) => {
-        if (end < items.length - 1) return end + 1;
-        return end;
-      },
-      visible: ({ items, paddedStart, paddedEnd }) => {
-        return items.slice(paddedStart, paddedEnd).map((data, i) => {
-          return { index: i + paddedStart, data };
-        });
-      },
-    },
-
     oncreate() {
-      const { _props } = this.get();
-      const { container } = this.refs;
+      const {items, defaultPageHeight, height} = this.get();
+      const pages = [];
+      for (let i = 0; i < items.length; i++) pages.push(new Page(defaultPageHeight, items[i]));
 
-      this.lastScrollTop = 0;
+      const viewport = new Viewport(
+        height,
+        pages,
+        0,
+        this.refs.viewport.scrollTop,
+        new CallbackCenter(
+          () => {
+            this.updateVisible();
+          },
+          (position) => {
+            this.set({userScroll: false});
+            this.refs.viewport.scrollTop = position;
+          },
+          (height) => {
+            this.set({totalHeight: height});
+          },
+        ),
+      );
+      this.set({viewport});
+      viewport.init();
+    },
 
-      const keys = Object.keys(this.options.data).filter(key => key !== 'items' && key !== 'component');
-      if (keys.length) {
-        const state = this.get();
-        keys.forEach(key => {
-          _props[key] = state[key];
-        });
-        this.set({ _props });
-
-        this.on('state', ({ changed, current }) => {
-          if (!keys.some(key => changed[key])) return;
-
-          const _props = {};
-          keys.forEach(key => {
-            _props[key] = current[key];
-          });
-          this.set({ _props });
-        });
-      }
-
-      this.rows = container.getElementsByClassName('row');
-      this.heightMap = [];
-
-      this.loadViewport();
+    data() {
+      return {
+        defaultPageHeight: 500,
+        height: 500,
+        top: 0,
+        bottom: 0,
+        userScroll: false,
+        visible: [],  
+      };
     },
 
     methods: {
-      jumpToPage(page) {
-        page--;
-
-        let offset = 0;
-        for (let i = 0; i < page; i++) {
-          offset += this.heightMap[i];
-        }
-        this.refs.viewport.scrollTop = offset;
-      },
-      loadViewport() {
-        const {items} = this.get();
-        const {viewport} = this.refs;
-        const viewportHeight = viewport.offsetHeight;
-        let height = 0;
-        let i = 0;
-
-        while (height < viewportHeight && i < items.length) {
-          this.set({ end: i + 1 });
-
-          const rowHeight = this.heightMap[i] = this.rows[i].offsetHeight;
-          height += rowHeight;
-
-          i += 1;
-        }
-
-        const end = i;
-        const avg = Math.round(height / i);
-
-        for (; i < items.length; i += 1) this.heightMap[i] = avg;
-
-        this.set({
-          bottom: (items.length - end) * avg
-        });
-      },
-      currentPage(pages, viewportHeight, pageOffset) {
-        let maxArea = null;
-        let maxAreaIndex = null;
-        for (let i = 0; i < pages.length; i++) {
-          let [top, bottom] = pages[i];
-          if (top < 0) top = 0;
-          if (bottom > viewportHeight) bottom = viewportHeight;
-          const area = bottom - top;
-          if (maxArea == null || area > maxArea) {
-            maxArea = area;
-            maxAreaIndex = i;
-          }
-        }
-        return {
-          top: pages[maxAreaIndex][0],
-          number: maxAreaIndex + pageOffset,
-        };
-      },
       handleScroll(event) {
-        const { items, start, end, paddedStart, paddedEnd, top, bottom, currentPage, currentPageTop, currentScrollTop, currentScrollBottom } = this.get();
-        let { offsetHeight, scrollTop, scrollHeight } = this.refs.viewport;
-        const scrollDelta = scrollTop - lastScrollTop;
-        lastScrollTop = scrollTop;
-        let paddingTop = 0;
-        let offset = 0;
-        let i = 0;
-
-        let vOff = 0;
-        let deltasBeforeStart = 0;
-        for (let v = 0; v < this.rows.length; v++) {
-          this.heightMap[v] = this.rows[v].offsetHeight;
+        // TODO see if user scroll is needed
+        const {userScroll, viewport} = this.get();
+        if (userScroll == false) {
+          // Update the ref.
+          this.refs.viewport.scrollTop = viewport.scrollTop;
+        } else {
+          // Update the viewport.
+          viewport.scrollToPosition(this.refs.viewport.scrollTop, userScroll);
         }
-        // for (let v = paddedStart; v < paddedEnd; v++) {
-        //   const rowIndex = v - paddedStart;
-        //   const visible = v >= start && v < end;
+        this.set({userScroll: true});
+      },
 
-        //   if (this.heightMap[v] != this.rows[rowIndex].offsetHeight) {
-        //     // console.log('changing', this.heightMap[v], this.rows[rowIndex].offsetHeight);
-        //     // console.log('start', start, 'changed', v);
-        //     if (v < start) {
-        //       deltasBeforeStart += this.heightMap[v] - this.rows[rowIndex].offsetHeight;
-        //     }
-        //   }
-        //   this.heightMap[v] = this.rows[rowIndex].offsetHeight;
-        // }
-
-        // if (event) console.log('event', event);
-        // scrollTop += deltasBeforeStart;
-        // this.refs.viewport.scrollTop = scrollTop;
-
-        for (; i < items.length; i++) {
-          offset += this.heightMap[i];
-          if (offset > scrollTop) break;
-
-          paddingTop = offset;
-        }
-
-        const pages = [[paddingTop - scrollTop, paddingTop - scrollTop + this.heightMap[i]]];
-        const newStart = i++;
-        console.log('new start', newStart);
-        let offset2 = this.heightMap[i];
-
-        for (; i < items.length; i++) {
-          if (offset > scrollTop + offsetHeight) break;
-          pages.push([paddingTop - scrollTop + offset2, paddingTop - scrollTop + offset2 + this.heightMap[i]]);
-          offset += this.heightMap[i];
-          offset2 += this.heightMap[i];
-        }
-        const newCurrentPage = this.currentPage(pages, offsetHeight, newStart);
-        let shift = 0;
-        // // if (newCurrentPage.number == currentPage) {
-        //   // const scrollTopDelta = scrollTop - this.lastScrollTop;
-        //   // const scrollBottomDelta = (scrollHeight - scrollTop) - currentScrollBottom;
-        // if (lastPageNum == newCurrentPage.page && !lastShift) {
-        //   const vertOffset = lastPageTop - newCurrentPage.top;
-        //   if (scrollDelta != vertOffset) {
-        //     // shift = vertOffset - scrollDelta;
-        //     console.log('shift!', shift);
-        //   }
-        //   console.log('scroll delta', scrollDelta);
-        //   console.log('page vert offset', vertOffset);
-        // }
-        // if (lastShift) lastShift = false;
-        // lastPageTop = newCurrentPage.top;
-        // lastPageNum = newCurrentPage.page;
-
-        const newEnd = i;
-
-        if (newStart === start && newEnd === end) return;
-
-        let paddingBottom = 0;
-        for (; i < items.length; i += 1) paddingBottom += this.heightMap[i];
-
-        const log = (num) => {
-          console.log('num', num);
-          return num;
+      updateVisible() {
+        const {viewport} = this.get();
+        const [startPage, endPage] = viewport.pageSet.visibleIndices();
+        const visible = [];
+        for (let i = startPage; i <= endPage; i++) {
+          visible.push({
+            index: i,
+            page: viewport.pageSet.pages[i],
+            data: viewport.pageSet.pages[i].data,
+          });
         }
         this.set({
-          top: paddingTop,
-          bottom: paddingBottom,
-          start: newStart,
-          end: newEnd,
-          currentPage: newCurrentPage.number,
-          currentPageTop: newCurrentPage.top,
-          currentScrollTop: scrollTop,
-          currentScrollBottom: scrollHeight - scrollTop,
+          visible,
+          top: viewport.pageSet.positionOfPageTop(startPage),
+          bottom: viewport.pageSet.totalHeight - viewport.pageSet.positionOfPageBottom(endPage),
+
+          // Debug
+          viewportHeight: viewport.height,
+          viewportTop: viewport.top(),
+          viewportBottom: viewport.bottom(),
+          viewportScrolltop: viewport.scrollTop,
+          pageSetHeight: viewport.pageSet.totalHeight,
+          pageSetHeightmap: viewport.pageSet.heightMap,
         });
-
-        // if (event && (event.num < newCurrentPage.number)) {
-        //   // debugger;
-        //   const offset = event.adjustedHeight - event.prevHeight;
-        //   this.refs.viewport.scrollTop += offset;
-        // }
-
-        // if (!lastShift) {
-          // this.refs.viewport.scrollTop += shift;
-          // lastShift = true;
-        // }
-
-        // this.refs.viewport.scrollTop -= shift;
-        // - ((event && event.num < currentPage) ? log(event.prevHeight - event.adjustedHeight) : 0)
-        // if (event) {
-        //   console.log(bottom, paddingBottom);
-        //   console.log('current page', currentPage, start, end);
-        //   const {num, prevHeight, adjustedHeight} = event;
-        //   this.refs.viewport.scrollTop += adjustedHeight - prevHeight;
-        // }
-      }
+      },
     }
   };
 </script>

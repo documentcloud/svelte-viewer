@@ -11,6 +11,7 @@ test('basic init', t => {
   ];
   const viewport = new Viewport(500, pages);
   const pageSet = viewport.pageSet;
+  viewport.init();
 
   // Viewport should observe first 3 pages
   [0, 1, 2].forEach((x) => t.true(pageSet.observed.has(x)));
@@ -32,6 +33,7 @@ test('invalidating estimate when observing page height', t => {
   ];
   const viewport = new Viewport(500, pages);
   const pageSet = viewport.pageSet;
+  viewport.init();
 
   // Observe the last page
   pages[3].load();
@@ -49,6 +51,7 @@ test('page position', t => {
   ];
   const viewport = new Viewport(500, pages);
   const pageSet = viewport.pageSet;
+  viewport.init();
 
   [0, 200, 400, 600].forEach((x, i) => t.is(pageSet.positionOfPageTop(i), x));
 });
@@ -62,8 +65,26 @@ test('page position starting near end', t => {
   ];
   const viewport = new Viewport(500, pages, 3);
   const pageSet = viewport.pageSet;
-
+  viewport.init();
   [0, 1000, 2000, 3000].forEach((x, i) => t.is(pageSet.positionOfPageTop(i), x));
+});
+
+test('visible pages, only one in view', t => {
+  const pages = [
+    new Page(700),
+    new Page(200),
+    new Page(200),
+    new Page(1000),
+  ];
+  const viewport = new Viewport(500, pages);
+  const pageSet = viewport.pageSet;
+  viewport.init();
+
+  t.deepEqual(pageSet.visibleIndices(), [0, 0]);
+
+  // Still only 1 page visible after 100px scroll.
+  viewport.scrollDelta(100);
+  t.deepEqual(pageSet.visibleIndices(), [0, 0]);
 });
 
 // test('visible', t => {
@@ -100,6 +121,7 @@ test('page scroll', t => {
   ];
   const viewport = new Viewport(500, pages);
   const pageSet = viewport.pageSet;
+  viewport.init();
 
   t.is(pageSet.heightMap[3], 200);
 
@@ -121,6 +143,7 @@ test('page jump', t => {
   ];
   const viewport = new Viewport(500, pages);
   const pageSet = viewport.pageSet;
+  viewport.init();
   viewport.scrollDelta(200);
   // Now all heightmaps should be updated and scroll should be at start of
   // second page.
