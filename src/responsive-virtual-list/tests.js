@@ -160,6 +160,70 @@ test('page jump', t => {
   t.deepEqual(pageSet.visible(), pages.slice(1));
 });
 
+test('do not jump for top position', t => {
+  const pages = [
+    new Page(600),
+    new Page(600),
+  ];
+  const viewport = new Viewport(500, pages);
+  const pageSet = viewport.pageSet;
+  viewport.init();
+
+  // Heightmaps should reflect first page at 600.
+  t.deepEqual(pageSet.heightMap, [600, 600]);
+  t.is(viewport.top(), 0);
+  t.deepEqual(pageSet.visible(), pages.slice(0, 1));
+
+  // Now, update the height of the first page.
+  pages[0].updateHeight(1000);
+
+  // Now view top should be the same.
+  t.deepEqual(pageSet.heightMap, [1000, 1000]);
+  t.is(viewport.top(), 0);
+  t.deepEqual(pageSet.visible(), pages.slice(0, 1));
+});
+
+test('scrolling up smooth', t => {
+  const pages = [
+    new Page(600),
+    new Page(600),
+  ];
+  const viewport = new Viewport(500, pages);
+  const pageSet = viewport.pageSet;
+  viewport.init();
+  viewport.scrollToBottomOfPage(1);
+  // Now all heightmaps should be updated and scroll should be at start of
+  // second page.
+  t.deepEqual(pageSet.heightMap, [600, 600]);
+  t.is(viewport.top(), 700);
+  t.deepEqual(pageSet.visible(), pages.slice(1));
+
+  // Now, update the height of the second page.
+  pages[1].updateHeight(1000);
+
+  // Now everything should be the same.
+  t.deepEqual(pageSet.heightMap, [600, 1000]);
+  t.is(viewport.top(), 700);
+  t.deepEqual(pageSet.visible(), pages.slice(1));
+
+  // Now scroll up so bottom of first page in view.
+  viewport.scrollDelta(-200);
+
+  // Now both pages should be visible.
+  t.is(viewport.top(), 500);
+  t.deepEqual(pageSet.heightMap, [600, 1000]);
+  t.deepEqual(pageSet.visible(), pages);
+
+  // Now update the height of the first page.
+  pages[0].updateHeight(1000);
+
+  // The scroll should preserve from bottom of first page.
+  t.is(viewport.top(), 900);
+  // So both pages are still visible.
+  t.deepEqual(pageSet.heightMap, [1000, 1000]);
+  t.deepEqual(pageSet.visible(), pages);
+});
+
 // test('jump page position', t => {
 //   const pages = [
 //     new Page(200),

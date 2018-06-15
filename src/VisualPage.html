@@ -1,22 +1,27 @@
-<div ref:container>
-  <Page>
-    {#each pageNotes as pageNote}
-    <div class="page-note">
-      <h3>{pageNote.title}</h3>
-      {#if pageNote.content != null}
-      <div>{@html pageNote.content}</div>
-      {/if}
-    </div>
-    {/each}
-    <div ref:page style="padding-top: 113%;">
-      {#if showImage}
-        <div style="position: absolute;">{num} {height}</div>
-        <img ref:img alt :src on:load="stupid()">
-      {:else}
-        <div style="position: absolute;">{num}</div>
-      {/if}
-    </div>
-  </Page>
+<div ref:container style="height: {height}px; overflow: hidden;">
+  <div ref:page>
+    <Page>
+      <div ref:redsquare style="height: 500px;">
+        <div style="position: absolute;">pg: {num} height: {height}</div>
+      </div>
+      <!-- {#each pageNotes as pageNote}
+      <div class="page-note">
+        <h3>{pageNote.title}</h3>
+        {#if pageNote.content != null}
+        <div>{@html pageNote.content}</div>
+        {/if}
+      </div>
+      {/each}
+      <div ref:subpage>
+        {#if showImage}
+          <div style="position: absolute;">{num} {height}</div>
+          <img ref:img alt :src on:load="imgLoaded()">
+        {:else}
+          <div style="position: absolute;">{num}</div>
+        {/if}
+      </div> -->
+    </Page>
+  </div>
 </div>
 
 <script>
@@ -25,20 +30,22 @@
   export default {
     oncreate() {
       const {page} = this.get();
-      page.updateHeight(this.refs.container.offsetHeight);
       setTimeout(() => {
-        if (document.body.contains(this.refs.page)) {
-          this.set({showImage: true});
-          const {img} = this.refs;
-          const poll = setInterval(() => {
-            if (img.naturalWidth) {
-              clearInterval(poll);
-              this.refs.page.style = '';
-              page.updateHeight(this.refs.container.offsetHeight);
-            }
-          }, 10);
-        }
-      }, 25);
+        this.refs.redsquare.style.height = '1000px';
+        this.updateHeight();
+      }, 3000);
+      // setTimeout(() => {
+      //   if (document.body.contains(this.refs.subpage)) {
+      //     this.set({showImage: true});
+      //     const {img} = this.refs;
+      //     const poll = setInterval(() => {
+      //       if (img.naturalWidth) {
+      //         clearInterval(poll);
+      //         this.updateHeight();
+      //       }
+      //     }, 10);
+      //   }
+      // }, 25);
     },
     data() {
       return {
@@ -55,18 +62,34 @@
       },
     },
     methods: {
-      stupid() {
+      imgLoaded() {
+        this.updateHeight();
+      },
+      updateHeight() {
+        this.setHeight(this.refs.page.offsetHeight);
+      },
+      setHeight(height) {
         const {page} = this.get();
-        this.refs.page.style = '';
-        page.updateHeight(this.refs.container.offsetHeight);
-      }
+        page.updateHeight(height);
+        this.set({height});
+      },
     },
     components: {Page},
   };
 </script>
 
 <style>
-  ref:page {
+  ref:container {
+    background: white;
+    border: solid 1px gainsboro;
+  }
+
+  ref:redsquare {
+    background: linear-gradient(#e66465, #9198e5);
+    position: relative;
+  }
+
+  ref:subpage {
     background: white;
     width: 100%;
     position: relative;

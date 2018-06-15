@@ -4,10 +4,11 @@ const SCROLL_OUT_OF_BOUNDS = 'The scroll position is out of bounds';
  * A class to route callbacks back to DOM.
  */
 export class CallbackCenter {
-  constructor(visibleCallback, scrollCallback, heightCallback) {
+  constructor(visibleCallback, scrollCallback, heightCallback, heightMapCallback) {
     this.visibleCallback = visibleCallback;
     this.scrollCallback = scrollCallback;
     this.heightCallback = heightCallback;
+    this.heightMapCallback = heightMapCallback;
   }
 }
 
@@ -233,13 +234,18 @@ export class PageSet {
     throw new Error('Position outside of doc');
   }
 
+  setHeightmap(index, amount, estimated = false) {
+    this.heightMap[index] = amount;
+    if (estimated && this.viewport.callbackCenter != null) this.viewport.callbackCenter.heightMapCallback(index, amount);
+  }
+
   updateEstimatedHeights() {
     const estimate = this.estimatedPageHeight();
     let total = 0;
     for (let i = 0; i < this.pages.length; i++) {
       if (!this.observed.has(i)) {
         // Update the heightmap for unobserved pages with the estimate.
-        this.heightMap[i] = estimate;
+        this.setHeightmap(i, estimate, true);
         total += estimate;
       } else {
         total += this.pages[i].height;
@@ -273,8 +279,7 @@ export class PageSet {
       // Set page properties to keep track of index and percolate events.
       page.index = i;
       page.pageSet = this;
-
-      this.heightMap[i] = page.height;
+      this.setHeightmap(i, page.height, true);
       offset += page.height;
       this.observed.add(i); // add page to observed
     }
@@ -298,8 +303,9 @@ export class PageSet {
    *     recalculated on.
    */
   updateScroll(page) {
-    const topPage = this.pageAtPosition(this.viewport.top());
-    if (page.index < topPage.index) {
+    const vtop = this.viewport.top();
+    const topPage = this.pageAtPosition(vtop);
+    if (page.index <= topPage.index && vtop != 0) {
       // Only if the page being loaded is before the first one displayed in the
       // viewport does the scroll need to be shifted.
       const delta = page.height - this.heightMap[page.index];
@@ -309,7 +315,7 @@ export class PageSet {
 
   pageUpdated(page) {
     this.updateScroll(page);
-    this.heightMap[page.index] = page.height;
+    this.setHeightmap(page.index, page.height);
     this.observed.add(page.index);
     this.updateEstimatedHeights();
   }

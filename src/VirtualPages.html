@@ -1,24 +1,28 @@
 <div>Visible pages: {visible.map((x) => x.index)}</div>
 {#if viewport}
-  <div>
-    <div>Debug:</div>
-    <ul>
-      <li>Viewport height: {viewportHeight}</li>
-      <li>Viewport top: {viewportTop}</li>
-      <li>Viewport bottom: {viewportBottom}</li>
-      <li>Top pad: {top}</li>
-      <li>Bottom pad: {bottom}</li>
-      <li>Scroll top: {viewportScrollTop}</li>
-      <li>Heightmap: {pageSetHeightmap}</li>
-      <li>Page set height: {pageSetHeight}</li>
-    </ul>
-  </div>
+  {#if verbose}
+    <div>
+      <div>Debug:</div>
+      <ul>
+        <li>Viewport height: {viewportHeight}</li>
+        <li>Viewport top: {viewportTop}</li>
+        <li>Viewport bottom: {viewportBottom}</li>
+        <li>Top pad: {top}</li>
+        <li>Bottom pad: {bottom}</li>
+        <li>Scroll top: {viewportScrollTop}</li>
+        <li>Heightmap: {pageSetHeightmap}</li>
+        <li>Page set height: {pageSetHeight}</li>
+      </ul>
+    </div>
+  {:else}
+    <div>Heightmap: {pageSetHeightmap}</div>
+  {/if}
 {/if}
 <div ref:viewport on:scroll='handleScroll()' style='height: {height}px;' bind:offsetHeight=viewportHeight>
   <div ref:container style='padding-top: {top}px; padding-bottom: {bottom}px;'>
     {#each visible as item (item.index)}
       <div class='row'>
-        <svelte:component this={component} {..._props} {...item.data} page={item.page} />
+        <svelte:component this={component} {..._props} {...item.data} page={item.page} height={item.height} />
       </div>
     {/each}
   </div>
@@ -28,6 +32,9 @@
   ref:viewport {
     overflow-y: auto;
     -webkit-overflow-scrolling:touch;
+    border: solid 2px black;
+    max-width: 744px;
+    margin: auto;
   }
 
   .row {
@@ -65,6 +72,10 @@
           },
           (height) => {
             this.set({totalHeight: height});
+          },
+          (index, height) => {
+            // Update the height of the specified page (which only applies if it's in the visible region)
+            this.updateVisible();
           },
         ),
       );
@@ -106,6 +117,7 @@
             index: i,
             page: viewport.pageSet.pages[i],
             data: viewport.pageSet.pages[i].data,
+            height: viewport.pageSet.heightMap[i],
           });
         }
         this.set({
