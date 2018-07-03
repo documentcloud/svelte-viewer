@@ -224,6 +224,28 @@ test('scrolling up smooth', t => {
   t.deepEqual(pageSet.visible(), pages);
 });
 
+test('suddenly scroll deep', t => {
+  // This tests an observed sudden jump when skipping 3 pages.
+  const pages = [
+    new Page(500),
+    new Page(500),
+    new Page(500),
+    new Page(500),
+    new Page(500),
+  ];
+
+  const viewport = new Viewport(500, pages);
+  const pageSet = viewport.pageSet;
+
+  viewport.init();
+  viewport.scrollDelta(1806);
+  t.deepEqual(pageSet.heightMap, [500, 500, 500, 500, 500]);
+  t.deepEqual(pageSet.visible(), pages.slice(3, 5));
+  
+  pages[3].updateHeight(1000);
+  t.is(viewport.scrollDelta(2306));
+});
+
 // test('jump page position', t => {
 //   const pages = [
 //     new Page(200),

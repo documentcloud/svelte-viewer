@@ -252,11 +252,10 @@ export class PageSet {
       }
     }
     this.updateTotalHeight(total);
-    
   }
 
-  updateTotalHeight(height) {
-    this.totalHeight = height;
+  updateTotalHeight(height, delta=false) {
+    this.totalHeight = delta ? this.totalHeight + height : height;
     if (this.viewport.callbackCenter != null) this.viewport.callbackCenter.heightCallback(height);
   }
 
@@ -304,16 +303,19 @@ export class PageSet {
    */
   updateScroll(page) {
     const vtop = this.viewport.top();
+    const vbottom = this.viewport.maxScrollPosition() - this.viewport.bottom();
     const topPage = this.pageAtPosition(vtop);
-    if (page.index <= topPage.index && vtop != 0) {
+    if (page.index <= topPage.index && vtop != 0 && vbottom != 0) {
       // Only if the page being loaded is before the first one displayed in the
       // viewport does the scroll need to be shifted.
       const delta = page.height - this.heightMap[page.index];
       this.viewport.scrollDelta(delta, false);
+      if (delta != 0) console.log('scroll delta', delta);
     }
   }
 
-  pageUpdated(page) {
+  pageUpdated(page, delta = null) {
+    if (delta != null) this.updateTotalHeight(delta, true);
     this.updateScroll(page);
     this.setHeightmap(page.index, page.height);
     this.observed.add(page.index);
@@ -335,7 +337,18 @@ export class Page {
   }
 
   updateHeight(height = null) {
-    if (height != null) this.height = height;
-    this.pageSet.pageUpdated(this);
+    if (height != null) {
+      console.log('update height', `page ${this.index}`, height, {
+        visible: this.pageSet.visible().slice(),
+        viewportTop: this.pageSet.viewport.scrollTop,
+        heightmap: this.pageSet.heightMap.slice(),
+      });
+    }
+    let delta = null;
+    if (height != null) {
+      delta = height - this.height;
+      this.height = height;
+    }
+    this.pageSet.pageUpdated(this, delta);
   }
 }

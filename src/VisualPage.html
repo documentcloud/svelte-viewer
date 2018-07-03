@@ -1,8 +1,21 @@
 <div ref:container style="height: {height}px; overflow: hidden;">
   <div ref:page>
     <Page>
-      <div ref:redsquare style="height: 500px;">
+      <div ref:redsquare style="height: {height}px; overflow: hidden;">
         <div style="position: absolute;">pg: {num} height: {height}</div>
+        <div style="margin-top: 25px; font-size: 1.3em; visibility: {height == 1000 ? 'visible' : 'hidden'}">
+          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum vitae tempus nisl, eget faucibus lorem. Proin eu ultrices tortor. Proin commodo urna et lorem facilisis, eu vehicula leo sollicitudin. Nam sagittis ligula vitae erat mattis, quis commodo est lobortis. Aliquam malesuada sem sit amet nunc feugiat placerat. Donec vulputate sapien et ligula ultricies viverra. Maecenas ornare tincidunt purus, ac porttitor neque rutrum tempor. In egestas ex vitae nisi consequat elementum. Donec viverra felis non neque convallis dignissim. Vivamus cursus lobortis consectetur. Quisque vestibulum id velit id ullamcorper. Nulla facilisi. Donec vitae sem justo. Praesent sed nisi tristique, vehicula mauris vitae, laoreet nisi. Integer ante mauris, gravida sit amet risus et, fermentum suscipit lorem. Sed dolor eros, maximus eu nulla id, rhoncus efficitur justo.</p>
+
+          <p>Aliquam non nisi vel lectus placerat sodales. Aliquam sit amet varius metus. Proin accumsan tempor ligula eget hendrerit. Praesent semper lacus vitae justo pharetra, nec sagittis sem tincidunt. Pellentesque sapien arcu, interdum vel tincidunt non, euismod eget neque. Suspendisse tempus felis vitae pulvinar laoreet. Aenean viverra, felis at commodo tempus, tellus elit pretium lectus, sed blandit orci nulla et libero. Phasellus tincidunt enim leo, nec dictum nulla feugiat at. In eget interdum metus, eu scelerisque neque. Nam sed sem sagittis, blandit orci quis, bibendum ex. Nulla sit amet tincidunt quam.</p>
+          
+          <p>Proin gravida eleifend ante eget dignissim. Mauris est risus, bibendum non dictum quis, tincidunt vitae mi. Mauris in orci at est lobortis viverra. In odio urna, faucibus sit amet iaculis et, congue vel sapien. Nulla et laoreet leo, a tincidunt est. Maecenas sem sem, sollicitudin nec lorem nec, placerat congue neque. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Sed sed libero a nulla semper sollicitudin quis in magna. Suspendisse potenti.</p>
+          
+          <p>Vivamus eu condimentum leo. Nunc fringilla quis elit nec aliquet. Donec diam velit, blandit a ex vel, tempus commodo ante. Sed sodales aliquam feugiat. Nullam ornare faucibus massa at laoreet. Mauris maximus placerat eleifend. In hac habitasse platea dictumst.</p>
+          
+          <p>Integer tristique justo aliquet aliquam varius. Integer viverra velit nulla, id dictum elit laoreet et. Maecenas quis tempus enim. Donec viverra urna vel nunc pretium, ac facilisis libero varius. Ut sed nisi eget nulla auctor consequat. Phasellus viverra, felis sed faucibus mollis, purus risus porttitor augue, eu eleifend nunc ipsum non felis. Phasellus ac finibus sapien. Morbi magna est, pulvinar nec vestibulum in, tincidunt luctus augue. Donec ut augue rutrum, facilisis nisl quis, iaculis ex. Sed varius odio nisi, eget sollicitudin ex porttitor sit amet. Nullam faucibus ligula a euismod scelerisque. Sed porta ipsum id mattis viverra. Aliquam consequat massa massa, in faucibus eros interdum vitae.</p>
+          
+          
+        </div>
       </div>
       <!-- {#each pageNotes as pageNote}
       <div class="page-note">
@@ -33,7 +46,7 @@
       setTimeout(() => {
         this.refs.redsquare.style.height = '1000px';
         this.updateHeight();
-      }, 3000);
+      }, 1000);
       // setTimeout(() => {
       //   if (document.body.contains(this.refs.subpage)) {
       //     this.set({showImage: true});
